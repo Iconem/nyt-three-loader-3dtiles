@@ -50,9 +50,6 @@ function App() {
                 url="http://192.168.10.123:8080/Interieur/Coupoles/3DTiles/merge_int_ext_S2_S3/tileset.json"
                 // url="https://int.nyt.com/data/3dscenes/ONA360/TILESET/0731_FREEMAN_ALLEY_10M_A_36x8K__10K-PN_50P_DB/tileset_tileset.json"
                 // url='/tileset_Vatican_basilique_interieur_cupola_N3_5M_4x16k.json'
-                // url='https://tile.googleapis.com/v1/3dtiles/root.json?key=AIzaSyD2im4uSnZQefEFJIlfSpSD39apMdiiKFE'
-                // url='https://tile.googleapis.com/v1/3dtiles/root.json?'
-                // googleApiKey='AIzaSyD2im4uSnZQefEFJIlfSpSD39apMdiiKFE'
                 maximumScreenSpaceError={48}
                 resetTransform={true}
                 // orientToGeocoord={{
