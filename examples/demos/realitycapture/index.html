@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,23 +10,26 @@
       margin: 0;
       padding: 0;
     }
+
     body {
       width: 100vw;
       height: 100vh;
       overflow: hidden;
     }
+
     #canvas-parent {
       width: 100vw;
       height: 100vh;
       touch-action: none;
     }
+
     #guide {
       position: fixed;
       top: 0;
       right: 0;
       width: 300px;
       padding: 1rem 2rem;
-      font-family:'Courier New', Courier, monospace;
+      font-family: 'Courier New', Courier, monospace;
       line-height: 1.2;
       background-color: white;
       color: black;
@@ -35,15 +39,17 @@
       margin-top: 10px;
     }
 
-    #stats-widget  {
+    #stats-widget {
       position: fixed;
       top: 70px;
       padding: 10px;
     }
+
     #stats-widget div {
       width: 300px;
       word-break: break-all;
     }
+
     #button {
       position: fixed;
       bottom: 16px;
@@ -56,11 +62,17 @@
       z-index: 999;
       box-shadow: 0 0 4px rgb(0 0 0 / 15%);
     }
+
     @media (max-width:480px) {
-      #guide, #stats-widget { display: none; }
+
+      #guide,
+      #stats-widget {
+        display: none;
+      }
     }
   </style>
 </head>
+
 <body>
   <div id='canvas-parent'></div>
   <div id="stats-widget"></div>
@@ -72,21 +84,22 @@
     <p>Use arrow/WASD keys or mouse wheel/trackpad to move around, and click and drag to turn/rotate the camera.</p>
     <p>
       <u>Available URL parameters:</u>
-      <ul>
-        <li><b>tilesetUrl</b>: Load another tileset json.</li>
-        <li><b>sse</b>: Change the maximum screen space error.</li>
-      </ul>
+    <ul>
+      <li><b>tilesetUrl</b>: Load another tileset json.</li>
+      <li><b>sse</b>: Change the maximum screen space error.</li>
+    </ul>
     </p>
   </div>
 
   <script type='module'>
-    import { 
-      Scene, 
-      PerspectiveCamera, 
-      WebGLRenderer, 
+    import {
+      Scene,
+      PerspectiveCamera,
+      WebGLRenderer,
       Clock,
       Matrix4,
       Vector2,
+      Vector3,
       Euler,
       SRGBColorSpace,
     } from 'three';
@@ -119,13 +132,13 @@
 
     const clock = new Clock()
     const rig = new CameraRig(camera, scene)
-    
+
     let controls = undefined;
 
     if (queryParams.get('orbit')) {
-      controls = new OrbitControls( camera, canvasParent);
-      controls.listenToKeyEvents( document.body );
-      camera.position.set(0,200,0);
+      controls = new OrbitControls(camera, canvasParent);
+      controls.listenToKeyEvents(document.body);
+      camera.position.set(0, 200, 0);
       controls.update();
     } else {
       controls = new FreeMovementControls(rig, {
@@ -136,7 +149,7 @@
       });
       controls.enable();
     }
-    
+
     canvasParent.appendChild(renderer.domElement);
 
     const threeJsStats = new Stats();
@@ -144,45 +157,48 @@
     threeJsStats.domElement.style.top = '10px';
     threeJsStats.domElement.style.left = '10px';
 
-    canvasParent.appendChild( threeJsStats.domElement );
+    canvasParent.appendChild(threeJsStats.domElement);
 
 
     let tilesRuntime = undefined;
+    let tilesRuntime2 = undefined;
     let statsRuntime = undefined;
 
     if (queryParams.get('tilesetUrl')) {
       document.querySelector('#example-desc').style.display = 'none';
     }
 
-   loadTileset();
+    tilesRuntime = await loadTileset('https://platformproductionstor.blob.core.windows.net/66e225d3-ba93-4c71-990b-859056075cac/66e225d3-ba93-4c71-990b-859056075cac.json?sv=2024-05-04&st=2024-07-04T06%3A47%3A43Z&se=2024-07-05T07%3A47%3A43Z&sr=c&sp=r&sig=typdPbWaYgYdxhebeQM5nTmlr8Fcy43B41LWibdhB%2FQ%3D');
+    tilesRuntime2 = await loadTileset('https://platformproductionstor.blob.core.windows.net/54620ec6-7508-4f71-b1d1-084bc9ab48e4/54620ec6-7508-4f71-b1d1-084bc9ab48e4.json?sv=2024-05-04&st=2024-07-04T06%3A47%3A43Z&se=2024-07-05T07%3A47%3A43Z&sr=c&sp=r&sig=JOj69ZPm2Mvg6pTwE7kUNbz424GoYeIMFWLk4YVYAJg%3D', new Vector3(288794.27217732, 4642050.2974701, 4.0575642678887));
 
-    async function loadTileset() {
+    async function loadTileset(url, shift = null) {
       const result = await Loader3DTiles.load(
         {
           url:
             queryParams.get('tilesetUrl') ??
-           'https://int.nyt.com/data/3dscenes/ONA360/TILESET/0731_FREEMAN_ALLEY_10M_A_36x8K__10K-PN_50P_DB/tileset_tileset.json',
-           viewport: getViewport(),
+            url,
+          viewport: getViewport(),
           options: {
             dracoDecoderPath: 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco',
             basisTranscoderPath: 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis',
             maximumScreenSpaceError: queryParams.get('sse') ?? 48,
+            // introduces shift between tilesets location 
             resetTransform: true
           }
-      });
+        });
 
-      const {model, runtime} = result;
+      const { model, runtime } = result;
       model.rotation.set(-Math.PI / 2, 0, Math.PI / 2);
 
       if (!queryParams.get('tilesetUrl')) {
         model.position.set(-1, 4, -16);
       }
 
-      tilesRuntime = runtime;
       scene.add(model);
 
-      statsRuntime = new StatsWidget(runtime.getStats(), {container: statsParent });
+      statsRuntime = new StatsWidget(runtime.getStats(), { container: statsParent });
       statsParent.style.visibility = 'visible';
+      return runtime;
     }
 
     function render(t) {
@@ -190,6 +206,9 @@
       controls.update(t);
       if (tilesRuntime) {
         tilesRuntime.update(dt, camera);
+      }
+      if (tilesRuntime2) {
+        tilesRuntime2.update(dt, camera);
       }
       if (statsRuntime) {
         statsRuntime.update();
@@ -205,6 +224,7 @@
     function onWindowResize() {
       renderer.setSize(canvasParent.clientWidth, canvasParent.clientHeight);
       tilesRuntime?.setViewport(getViewport());
+      tilesRuntime2?.setViewport(getViewport());
       camera.aspect = canvasParent.clientWidth / canvasParent.clientHeight;
       camera.updateProjectionMatrix();
     }
@@ -220,6 +240,9 @@
 
     render();
   </script>
-  <a id="button" target="_blank" href="https://github.com/nytimes/three-loader-3dtiles/blob/master/examples/demos/realitycapture/index.html" title="View source code for demo" style=""><img src="../ic_code_black_24dp.svg"></a>
+  <a id="button" target="_blank"
+    href="https://github.com/nytimes/three-loader-3dtiles/blob/master/examples/demos/realitycapture/index.html"
+    title="View source code for demo" style=""><img src="../ic_code_black_24dp.svg"></a>
 </body>
+
 </html>
