@@ -1,8 +1,61 @@
+import { useEffect, useRef } from 'react';
 import { Loader3DTiles, LoaderProps, Runtime } from 'three-loader-3dtiles';
 import { useLoader, useThree, useFrame } from '@react-three/fiber';
-import { Loader, Vector2 } from 'three';
+import * as THREE from 'three';
+import { TilesRenderer, DebugTilesRenderer } from '3d-tiles-renderer';
 
-class Loader3DTilesBridge extends Loader {
+export function TilesRendererR3F(props) {
+  const tilesRendererRef = useRef(null);
+  const groupRef = useRef(null);
+  const { camera, gl } = useThree();
+
+  useEffect(() => {
+    if (!props.url) return;
+
+    const tilesRenderer = new DebugTilesRenderer(props.url);
+    tilesRenderer.displayBoxBounds = true
+    tilesRenderer.setCamera(camera);
+    tilesRenderer.setResolutionFromRenderer(camera, gl);
+    tilesRenderer.addEventListener('load-tile-set', () => {
+      // optionally center the tile set in case it's far off center
+      const sphere = new THREE.Sphere();
+      tilesRenderer.getBoundingSphere(sphere);
+      if (props.resetTransform)
+        tilesRenderer.group.position.copy(sphere.center).multiplyScalar(-1);
+      else if ( props.matrixTransform)
+        tilesRenderer.group.applyMatrix4(props.matrixTransform);
+    });
+    tilesRenderer.onLoadModel = (scene, tile) => {
+      // console.log('onLoadModel', scene, tile);
+      scene.traverse((child: THREE.Object3D) => {
+        if ((child as THREE.Mesh).isMesh) {
+          // (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({
+          //   color: 0x0000ff,
+          // });
+          console.log(child);
+        }
+      });
+    };
+
+    tilesRendererRef.current = tilesRenderer;
+
+    // sceneRef.current = tilesRenderer.group;
+    groupRef.current.add(tilesRenderer.group);
+
+    return () => {
+      tilesRenderer.dispose();
+      groupRef.current.remove(tilesRenderer.group);
+    };
+  }, [props.url]);
+
+  useFrame(() => {
+    tilesRendererRef.current?.update();
+  });
+
+  return <group ref={groupRef} />;
+}
+
+class Loader3DTilesBridge extends THREE.Loader {
   props: LoaderProps;
 
   load(url, onLoad, onProgress, onError) {
@@ -63,7 +116,7 @@ function Loader3DTilesR3FAsset(props) {
   );
 }
 function getViewport(renderer) {
-  const viewSize = renderer.getSize(new Vector2());
+  const viewSize = renderer.getSize(new THREE.Vector2());
   return {
     width: viewSize.x,
     height: viewSize.y,
