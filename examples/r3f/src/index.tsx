@@ -6,6 +6,20 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Matrix4, Euler } from 'three';
 
 import { Loader3DTilesR3FAsset, TilesRendererR3F } from './loader-3dtiles-r3f';
+// import { GEOMETRIC_ERROR, IS_LEAF,  } from '3d-tiles-renderer';
+// import { ColorMode  } from '3d-tiles-renderer';
+
+const SCREEN_ERROR = 1;
+const RANDOM_COLOR = 7;
+const RELATIVE_DEPTH = 5;
+const GEOMETRIC_ERROR = 2;
+// Less interesting
+const DISTANCE = 3;
+const LOAD_ORDER = 10;
+const NONE = 0;
+const IS_LEAF = 6;
+const RANDOM_NODE_COLOR = 8;
+const CUSTOM_COLOR = 9;
 
 function App() {
   const camera = useRef(null);
@@ -27,8 +41,22 @@ function App() {
         {/* <PerspectiveCamera ref={camera} position={[1334910.452860931, 4138104, -4653115.0285432]}></PerspectiveCamera> */}
         {/* <OrbitControls  target={[4103371.51391358, 4707583.85766857, -1237856.306154429]} minDistance={20} maxDistance={30} /> */}
         {/* <OrbitControls target={[0, 0, 0]} minDistance={0.1} maxDistance={3000} /> */}
-        <PerspectiveCamera />
-        <OrbitControls enableDamping={false} />
+        <PerspectiveCamera
+        // position={[
+        //   4642456.479168438,
+        //   1025308.9160150675,
+        //   4237613.677617846,
+        //   ]}
+        />
+        <OrbitControls
+          enableDamping={false}
+          // target={[
+          //     4642456.479168438,
+          //     1025308.9160150675,
+          //     4237613.677617846,
+          //   ]}
+        />
+        <axesHelper args={[1000]} />
         <ambientLight intensity={1} />
         <ErrorBoundary
           fallbackRender={() => (
@@ -77,10 +105,18 @@ function App() {
               //   long: -73.99266363643088,
               // }}
             /> */}
-            <TilesRendererR3F 
-              url="/tileset_Vatican_basilique_interieur_cupola_N3_5M_4x16k.json" 
-              resetTransform={false} 
-              matrixTransform={new Matrix4().makeTranslation(0, 0, 0)}
+            <TilesRendererR3F
+              url="/tileset_Vatican_basilique_interieur_cupola_N3_5M_4x16k.json"
+              debug={{
+                displayBoxBounds: true,
+                colorMode: LOAD_ORDER,
+              }}
+              resetTransform={false}
+              matrixTransform={new Matrix4().makeTranslation(
+                -4642456.479168438,
+                -1025308.9160150675,
+                -4237613.677617846,
+              )}
             />
           </Suspense>
         </ErrorBoundary>

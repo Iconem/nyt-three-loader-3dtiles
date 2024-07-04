@@ -12,19 +12,15 @@ export function TilesRendererR3F(props) {
   useEffect(() => {
     if (!props.url) return;
 
-    const tilesRenderer = new DebugTilesRenderer(props.url);
-    tilesRenderer.displayBoxBounds = true
+    let tilesRenderer;
+    if (!props.debug) tilesRenderer = new TilesRenderer(props.url);
+    else {
+      tilesRenderer = new DebugTilesRenderer(props.url);
+      Object.entries(props.debug).forEach((entry, idx) => (tilesRenderer[entry[0]] = entry[1]));
+    }
     tilesRenderer.setCamera(camera);
     tilesRenderer.setResolutionFromRenderer(camera, gl);
-    tilesRenderer.addEventListener('load-tile-set', () => {
-      // optionally center the tile set in case it's far off center
-      const sphere = new THREE.Sphere();
-      tilesRenderer.getBoundingSphere(sphere);
-      if (props.resetTransform)
-        tilesRenderer.group.position.copy(sphere.center).multiplyScalar(-1);
-      else if ( props.matrixTransform)
-        tilesRenderer.group.applyMatrix4(props.matrixTransform);
-    });
+    tilesRenderer.addEventListener('load-tile-set', () => {});
     tilesRenderer.onLoadModel = (scene, tile) => {
       // console.log('onLoadModel', scene, tile);
       scene.traverse((child: THREE.Object3D) => {
@@ -42,16 +38,30 @@ export function TilesRendererR3F(props) {
     // sceneRef.current = tilesRenderer.group;
     groupRef.current.add(tilesRenderer.group);
 
+    // optionally center the tile set in case it's far off center
+    // tilesRenderer.group or groupRef.current
+    const sphere = new THREE.Sphere();
+    tilesRenderer.getBoundingSphere(sphere);
+    console.log('yo sphere', sphere);
+    if (props.resetTransform) {
+      groupRef.current.position.copy(sphere.center).multiplyScalar(-1);
+    } else if (props.matrixTransform) groupRef.current.applyMatrix4(props.matrixTransform);
+
     return () => {
       tilesRenderer.dispose();
       groupRef.current.remove(tilesRenderer.group);
     };
-  }, [props.url]);
+  }, []);
 
   useFrame(() => {
     tilesRendererRef.current?.update();
   });
 
+  const { scene } = useThree();
+
+  const sphere = new THREE.Sphere();
+  tilesRendererRef.current?.getBoundingSphere(sphere);
+  console.log('scene', scene, groupRef.current, sphere);
   return <group ref={groupRef} />;
 }
 
